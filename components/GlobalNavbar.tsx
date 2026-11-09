@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+import { useAuth } from "@/components/AuthProvider";
+import { useLanguage } from "@/components/LanguageProvider";
+import { useTaskNotifications } from "@/components/TaskNotificationProvider";
+
+const subscribeToMount = () => () => {};
+const getMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
 
 function SunIcon() {
   return (
@@ -30,41 +39,77 @@ function GlobeIcon() {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">
+      <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function GlobalNavbar() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [language, setLanguage] = useState<"TH" | "EN">("TH");
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { user } = useAuth();
+  const { permission, requestPermission } = useTaskNotifications();
+  const { language, toggleLanguage, t } = useLanguage();
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    getMountedSnapshot,
+    getServerMountedSnapshot,
+  );
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
-
-  const toggleLanguage = () => {
-    setLanguage((current) => (current === "TH" ? "EN" : "TH"));
-  };
+  const nickname = user?.displayName?.trim();
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
-            T
-          </div>
+          <Image
+            src="/icon-192.png"
+            width={36}
+            height={36}
+            alt=""
+            aria-hidden="true"
+            className="rounded-xl shadow-lg shadow-indigo-500/25"
+          />
           <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            TodoFlow
+            {nickname ? `Todo (${nickname})` : "Todo"}
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {user ? (
+            <button
+              type="button"
+              onClick={() => void requestPermission()}
+              aria-label={
+                permission === "granted"
+                  ? t("nav.notificationsEnabled")
+                  : t("nav.enableNotifications")
+              }
+              aria-pressed={permission === "granted"}
+              title={
+                permission === "granted"
+                  ? t("nav.notificationsEnabled")
+                  : t("nav.enableNotifications")
+              }
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border text-lg transition ${
+                permission === "granted"
+                  ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
+                  : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              }`}
+            >
+              <BellIcon />
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={toggleLanguage}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-            aria-label="Switch language"
+            aria-label={t("nav.switchLanguage")}
           >
             <GlobeIcon />
             <span>{language}</span>
@@ -74,7 +119,7 @@ export function GlobalNavbar() {
             type="button"
             onClick={toggleTheme}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-            aria-label="Toggle theme"
+            aria-label={t("nav.toggleTheme")}
           >
             {mounted && resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>

@@ -1,6 +1,8 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
+import type { FirebaseApp } from "firebase/app";
 import type { Auth } from "firebase/auth";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
@@ -12,15 +14,23 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "",
 };
 
-export const isFirebaseConfigured = Object.values(firebaseConfig).every((value) => Boolean(value));
+const requiredFirebaseConfig = [
+  firebaseConfig.apiKey,
+  firebaseConfig.authDomain,
+  firebaseConfig.projectId,
+  firebaseConfig.appId,
+];
 
-let app = undefined;
+export const isFirebaseConfigured = requiredFirebaseConfig.every(Boolean);
 
-if (isFirebaseConfigured) {
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-}
+const app: FirebaseApp | null = isFirebaseConfigured
+  ? getApps().length > 0
+    ? getApp()
+    : initializeApp(firebaseConfig)
+  : null;
 
-export const auth = isFirebaseConfigured && app ? (getAuth(app) as Auth) : (null as unknown as Auth);
+export const auth: Auth | null = app ? getAuth(app) : null;
+export const db: Firestore | null = app ? getFirestore(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: "select_account",

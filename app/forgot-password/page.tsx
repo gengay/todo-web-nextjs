@@ -3,21 +3,22 @@
 import Link from "next/link";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { FormEvent, useState } from "react";
+import { toast } from "sonner";
 
+import { useLanguage } from "@/components/LanguageProvider";
 import { auth } from "@/lib/firebase";
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
 
     if (!auth) {
-      setError("Firebase ยังไม่ได้ถูกกำหนดค่าใน environment variables กรุณาตั้งค่าเริ่มแรก");
+      toast.error(t("auth.firebaseNotConfigured"));
       return;
     }
 
@@ -26,12 +27,10 @@ export default function ForgotPasswordPage() {
     try {
       await sendPasswordResetEmail(auth, email);
       setIsSent(true);
+      toast.success(t("auth.resetSent"));
     } catch (submitError) {
-      const message =
-        submitError instanceof Error
-          ? submitError.message
-          : "ไม่สามารถส่งลิงก์รีเซ็ตรหัสผ่านได้ กรุณาลองใหม่อีกครั้ง";
-      setError(message);
+      console.error("Could not send password reset email", submitError);
+      toast.error(t("auth.resetFailed"));
       setIsSent(false);
     } finally {
       setIsSubmitting(false);
@@ -46,13 +45,13 @@ export default function ForgotPasswordPage() {
             T
           </div>
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-indigo-500">TodoFlow</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">ตั้งรหัสผ่านใหม่</h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{t("auth.resetPassword")}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-              อีเมล
+              {t("auth.email")}
             </label>
             <input
               id="forgot-email"
@@ -65,15 +64,9 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          {error ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
-              {error}
-            </div>
-          ) : null}
-
           {isSent ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
-              ส่งลิงก์ไปยังอีเมลแล้ว กรุณาตรวจสอบกล่องจดหมาย
+              {t("auth.resetSent")}
             </div>
           ) : null}
 
@@ -82,14 +75,14 @@ export default function ForgotPasswordPage() {
             disabled={isSubmitting}
             className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-indigo-500 dark:hover:bg-indigo-400"
           >
-            {isSubmitting ? "กำลังส่งลิงก์..." : "ส่งลิงก์รีเซ็ตรหัสผ่าน"}
+            {isSubmitting ? t("auth.sending") : t("auth.sendReset")}
           </button>
         </form>
 
         <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-300">
-          กลับไปยัง {" "}
+          {t("task.back")}{" "}
           <Link href="/login" className="font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400">
-            หน้า Login
+            {t("auth.login")}
           </Link>
         </p>
       </div>

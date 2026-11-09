@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { GlobalNavbar } from "@/components/GlobalNavbar";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { AppProviders } from "@/components/AppProviders";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,24 +15,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TodoFlow",
+  title: "Todo",
   description: "Minimal Todo web app with Firebase authentication",
+  applicationName: "Todo",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="en"
+      lang="th"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <AppProviders>
           <div className="min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
-            <GlobalNavbar />
             {children}
           </div>
-        </ThemeProvider>
+        </AppProviders>
       </body>
     </html>
   );
